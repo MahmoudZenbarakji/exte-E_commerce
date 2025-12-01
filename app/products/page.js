@@ -29,7 +29,13 @@ function ProductsPageContent() {
   const isRTL = currentLanguage === 'ar';
 
   // Available filter options
-  const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46'];
+  const sizeOptions = [
+    'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL',
+    '26', '28', '30', '31', '32', '33', '34',
+    '36', '38', '40', '42', '44', '46',
+    '48', '50', '52', '54', '56', '58', '60',
+    'XXXXL', 'XXXXXL', 'XXXXXXL'
+  ];
   const sortOptions = [
     { value: 'newest', label: translations.newestFirst || 'Newest First' },
     { value: 'price-low', label: translations.priceLowToHigh || 'Price: Low to High' },

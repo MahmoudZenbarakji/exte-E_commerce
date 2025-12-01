@@ -693,7 +693,13 @@ export default function CollectionsPage() {
                     className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base"
                   >
                     <option value="">{translations.selectSize || 'Select Size'}</option>
-                    {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL','XXXXL','XXXXXL','XXXXXXL','26','28','30','32','34','36','38','40', '36', '38', '40', '42', '44', '46', '48', '50','52','54','56','58','60'].map(size => (
+                    {[
+                      'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL',
+                      '26', '28', '30', '31', '32', '33', '34',
+                      '36', '38', '40', '42', '44', '46',
+                      '48', '50', '52', '54', '56', '58', '60',
+                      'XXXXL', 'XXXXXL', 'XXXXXXL'
+                    ].map(size => (
                       <option key={size} value={size}>{size}</option>
                     ))}
                   </select>
