@@ -13,6 +13,15 @@ const ProductSchema = new mongoose.Schema({
     required: [true, 'Product description is required'],
     maxlength: 2000
   },
+  nameEn: {
+    type: String,
+    trim: true,
+    maxlength: 200
+  },
+  descriptionEn: {
+    type: String,
+    maxlength: 2000
+  },
   price: {
     type: Number,
     required: [true, 'Product price is required'],

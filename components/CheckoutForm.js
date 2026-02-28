@@ -112,11 +112,11 @@ export default function CheckoutForm({ isOpen, onClose, onCheckout, cart, updati
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="font-light text-gray-600">{translations.items || 'Items'} ({cart.itemCount})</span>
-                  <span className="font-light text-gray-900">{cart.total.toFixed(2)} ل.س</span>
+                  <span className="font-light text-gray-900">{cart.total.toFixed(2)} {translations.currencySymbol}</span>
                 </div>
                 <div className="flex justify-between text-base border-t border-gray-200 pt-2">
                   <span className="font-light text-gray-900">{translations.total || 'Total'}</span>
-                  <span className="font-light text-gray-900">{cart.total.toFixed(2)} ل.س</span>
+                  <span className="font-light text-gray-900">{cart.total.toFixed(2)} {translations.currencySymbol}</span>
                 </div>
               </div>
             </div>

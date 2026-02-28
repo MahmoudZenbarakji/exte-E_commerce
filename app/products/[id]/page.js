@@ -15,7 +15,7 @@ import toast, { Toaster } from 'react-hot-toast'; // Add Toaster import
 export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, getProductDisplay, currentLanguage } = useLanguage();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState('');
@@ -306,7 +306,7 @@ const handleAddToCart = async () => {
               <span>/</span>
               <Link href="/products" className="hover:text-gray-900">{t('products')}</Link>
               <span>/</span>
-              <span className="text-gray-900">{product.name}</span>
+              <span className="text-gray-900">{getProductDisplay(product).name}</span>
             </nav>
           </div>
         </div>
@@ -321,7 +321,7 @@ const handleAddToCart = async () => {
   {images && images[activeImage] ? (
     <Image
       src={images[activeImage]}
-      alt={product.name}
+      alt={getProductDisplay(product).name}
       className="object-cover w-full h-full"
       width={1200}
       height={1200}
@@ -346,7 +346,7 @@ const handleAddToCart = async () => {
                     >
                       <Image
                         src={image}
-                        alt={`${product.name} ${index + 1}`}
+                        alt={`${getProductDisplay(product).name} ${index + 1}`}
                         fill
                         className="object-cover"
                       />
@@ -361,20 +361,20 @@ const handleAddToCart = async () => {
               {/* Product Header */}
               <div>
                 <h1 className="text-2xl lg:text-3xl font-light tracking-wide text-gray-900 mb-2">
-                  {product.name}
+                  {getProductDisplay(product).name}
                 </h1>
 
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-4">
                   <p className="text-xl lg:text-2xl font-light text-gray-900">
-                     {product.price} ل.س
+                     {product.price} {t('currencySymbol')}
                   </p>
                   {product.originalPrice && product.originalPrice > product.price && (
                     <>
                       <p className="text-lg text-gray-400 line-through font-light">
-                         {product.originalPrice} ل.س
+                         {product.originalPrice} {t('currencySymbol')}
                       </p>
                       <span className="bg-red-500 text-white px-2 py-1 text-xs font-light tracking-wide w-fit">
-                        {t('save')}  {product.originalPrice - product.price} ل.س
+                        {t('save')}  {product.originalPrice - product.price} {t('currencySymbol')}
                       </span>
                     </>
                   )}
@@ -415,11 +415,11 @@ const handleAddToCart = async () => {
                 </div>
               </div>
 
-              {/* Description */}
-              <div>
+              {/* Description - key forces re-render when language changes */}
+              <div key={currentLanguage}>
                 <h3 className="text-sm font-light text-gray-700 mb-2 tracking-wide">{t('description')}</h3>
                 <p className="text-gray-600 font-light leading-relaxed">
-                  {product.description}
+                  {getProductDisplay(product).description}
                 </p>
               </div>
 
@@ -569,7 +569,7 @@ const handleAddToCart = async () => {
                         {relatedProduct.featuredImage && (
                           <Image
                             src={relatedProduct.featuredImage}
-                            alt={relatedProduct.name}
+                            alt={getProductDisplay(relatedProduct).name}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-105"
                           />
@@ -577,10 +577,10 @@ const handleAddToCart = async () => {
                       </div>
                       <div>
                         <h3 className="font-light text-gray-900 text-sm tracking-wide mb-1 line-clamp-1">
-                          {relatedProduct.name}
+                          {getProductDisplay(relatedProduct).name}
                         </h3>
                         <p className="text-gray-600 font-light text-sm">
-                           {relatedProduct.price} ل.س
+                           {relatedProduct.price} {t('currencySymbol')}
                         </p>
                       </div>
                     </Link>

@@ -10,7 +10,8 @@ const ProductCard = ({ product }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
-    const { translations } = useLanguage();
+    const { translations, getProductDisplay } = useLanguage();
+    const display = getProductDisplay(product);
 
     const fallbackImage = '/images/placeholder-product.jpg';
 
@@ -61,7 +62,7 @@ const ProductCard = ({ product }) => {
                         <>
                             <Image
                                 src={product.featuredImage}
-                                alt={product.name}
+                                alt={display.name}
                                 fill
                                 className={`object-cover transition-transform duration-500 group-hover:scale-105 ${!imageLoading ? 'opacity-100' : 'opacity-0'
                                     }`}
@@ -119,7 +120,7 @@ const ProductCard = ({ product }) => {
 
                     {/* Out of Stock Overlay */}
                     {product.sizes && product.sizes.every(size => size.stock === 0) && (
-                        <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center">
+                        <div className=" inset-0 bg-white bg-opacity-80 flex items-center justify-center">
                             <span className="text-gray-900 font-light tracking-wide text-sm">{translations.outOfStock}</span>
                         </div>
                     )}
@@ -128,17 +129,17 @@ const ProductCard = ({ product }) => {
                 {/* Product Info */}
                 <div className="space-y-2">
                     <h3 className="font-light text-gray-900 text-sm tracking-wide line-clamp-2 leading-relaxed">
-                        {product.name}
+                        {display.name}
                     </h3>
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <p className="text-gray-900 font-light text-sm">
-                              {product.price} ل.س
+                              {product.price} {translations.currencySymbol}
                             </p>
                             {product.originalPrice && product.originalPrice > product.price && (
                                 <p className="text-gray-400 line-through text-sm font-light">
-                                     {product.originalPrice} ل.س
+                                     {product.originalPrice} {translations.currencySymbol}
                                 </p>
                             )}
                         </div>

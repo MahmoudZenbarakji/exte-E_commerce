@@ -4,12 +4,12 @@ import { SessionProvider } from "next-auth/react";
 
 import { LanguageProvider } from '../context/LanguageContext';
 
-export function Providers({ children }) {
+export function Providers({ children, initialLocale = "ar" }) {
   return (
     <SessionProvider>
-    <LanguageProvider>
-      {children}
-    </LanguageProvider>
+      <LanguageProvider initialLocale={initialLocale}>
+        {children}
+      </LanguageProvider>
     </SessionProvider>
   );
 }

@@ -13,7 +13,7 @@ const LatestCollections = () => {
     categories: []
   });
   const [loading, setLoading] = useState(true);
-  const { translations } = useLanguage();
+  const { translations, getProductDisplay } = useLanguage();
 
   useEffect(() => {
     fetchLatestData();
@@ -173,7 +173,7 @@ const LatestCollections = () => {
         {product.featuredImage ? (
           <Image
             src={product.featuredImage}
-            alt={product.name}
+            alt={getProductDisplay(product).name}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
@@ -215,15 +215,15 @@ const LatestCollections = () => {
       {/* Content */}
       <div className="p-4 space-y-2">
         <h3 className="font-light text-gray-900 text-base tracking-wide leading-relaxed group-hover:text-gray-700 transition-colors line-clamp-1">
-          {product.name}
+          {getProductDisplay(product).name}
         </h3>
         
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-light text-gray-900">{product.price} ل.س</p>
+            <p className="text-sm font-light text-gray-900">{product.price} {translations.currencySymbol}</p>
             {product.originalPrice && product.originalPrice > product.price && (
               <p className="text-xs text-gray-400 line-through font-light">
-                {product.originalPrice} ل.س
+                {product.originalPrice} {translations.currencySymbol}
               </p>
             )}
           </div>

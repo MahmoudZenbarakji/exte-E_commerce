@@ -10,7 +10,7 @@ export default function LikesPage() {
   const { data: session, status } = useSession();
   const [likedProducts, setLikedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { currentLanguage, translations } = useLanguage();
+  const { currentLanguage, translations, getProductDisplay } = useLanguage();
   const isRTL = currentLanguage === 'ar';
 
   useEffect(() => {
@@ -126,7 +126,7 @@ const fetchLikedProducts = async () => {
                     {product.featuredImage ? (
                       <Image
                         src={product.featuredImage}
-                        alt={product.name}
+                        alt={getProductDisplay(product).name}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
@@ -172,18 +172,18 @@ const fetchLikedProducts = async () => {
                 <div className="space-y-2">
                   <Link href={`/products/${product._id}`}>
                     <h3 className="font-light text-gray-900 text-sm tracking-wide line-clamp-2 leading-relaxed hover:text-gray-700">
-                      {product.name}
+                      {getProductDisplay(product).name}
                     </h3>
                   </Link>
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <p className="text-gray-900 font-light text-sm">
-                         {product.price} ل.س
+                         {product.price} {translations.currencySymbol}
                       </p>
                       {product.originalPrice && product.originalPrice > product.price && (
                         <p className="text-gray-400 line-through text-sm font-light">
-                          {product.originalPrice} ل.س
+                          {product.originalPrice} {translations.currencySymbol}
                         </p>
                       )}
                     </div>

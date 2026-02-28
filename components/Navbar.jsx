@@ -19,7 +19,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { currentLanguage, toggleLanguage, translations } = useLanguage();
+  const { currentLanguage, toggleLanguage, translations, getProductDisplay } = useLanguage();
   const profileDropdownRef = useRef(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -308,13 +308,13 @@ export default function Navbar() {
                                 {item.product?.featuredImage && (
                                   <img
                                     src={item.product.featuredImage}
-                                    alt={item.product.name}
+                                    alt={getProductDisplay(item.product).name}
                                     className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                                   />
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <h4 className="text-sm font-medium text-gray-900 truncate">
-                                    {item.product?.name}
+                                    {item.product ? getProductDisplay(item.product).name : ''}
                                   </h4>
                                   <p className="text-sm text-gray-600">${item.price?.toFixed(2)}</p>
                                   <p className="text-xs text-gray-500">Size: {item.size}</p>

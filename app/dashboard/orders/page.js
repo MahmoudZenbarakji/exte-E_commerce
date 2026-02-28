@@ -12,7 +12,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const { currentLanguage, translations } = useLanguage();
+  const { currentLanguage, translations, getProductDisplay } = useLanguage();
   const isRTL = currentLanguage === 'ar';
 
   useEffect(() => {
@@ -232,7 +232,7 @@ export default function OrdersPage() {
                             <span className="text-xs font-medium">{statusConfig.label}</span>
                           </div>
                           <p className="text-xl font-light text-gray-900">
-                            {order.total.toFixed(2)} ل.س
+                            {order.total.toFixed(2)} {translations.currencySymbol}
                           </p>
                         </div>
                         
@@ -255,7 +255,7 @@ export default function OrdersPage() {
                             {item.product?.featuredImage ? (
                               <Image
                                 src={item.product.featuredImage}
-                                alt={item.product.name}
+                                alt={getProductDisplay(item.product).name}
                                 fill
                                 className="object-cover"
                               />
@@ -269,7 +269,7 @@ export default function OrdersPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-light text-gray-900 text-sm line-clamp-2 mb-1">
-                              {item.product?.name}
+                              {item.product ? getProductDisplay(item.product).name : ''}
                             </h4>
                             <div className="flex flex-wrap items-center gap-1.5">
                               <span className="bg-white px-2 py-0.5 rounded text-xs text-gray-600 border border-gray-200">
@@ -290,7 +290,7 @@ export default function OrdersPage() {
                             </div>
                           </div>
                           <p className="text-base font-light text-gray-900 whitespace-nowrap flex-shrink-0">
-                            {(item.price * item.quantity).toFixed(2)} ل.س
+                            {(item.price * item.quantity).toFixed(2)} {translations.currencySymbol}
                           </p>
                         </div>
                       ))}

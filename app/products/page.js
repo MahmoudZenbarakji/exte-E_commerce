@@ -102,12 +102,14 @@ const applyFilters = useCallback(() => {
 
   let filtered = [...allProducts];
 
-  // Apply search filter
+  // Apply search filter (include English fields when set)
   if (filters.search) {
     const searchTerm = filters.search.toLowerCase();
-    filtered = filtered.filter(product => 
-      product.name.toLowerCase().includes(searchTerm) ||
-      product.description?.toLowerCase().includes(searchTerm)
+    filtered = filtered.filter(product =>
+      product.name?.toLowerCase().includes(searchTerm) ||
+      product.nameEn?.toLowerCase().includes(searchTerm) ||
+      product.description?.toLowerCase().includes(searchTerm) ||
+      product.descriptionEn?.toLowerCase().includes(searchTerm)
     );
   }
 
@@ -317,12 +319,12 @@ const applyFilters = useCallback(() => {
         {/* Price Display */}
         <div className="flex items-center justify-between">
           <div className="text-left">
-            <span className="text-xl font-bold text-gray-900">{formatPrice(localRange[0])} ل.س</span>
+            <span className="text-xl font-bold text-gray-900">{formatPrice(localRange[0])} {translations.currencySymbol}</span>
             <div className="text-xs text-gray-500 mt-1">Minimum</div>
           </div>
           <div className="w-4 h-0.5 bg-gray-300 mx-4"></div>
           <div className="text-right">
-            <span className="text-xl font-bold text-gray-900">{formatPrice(localRange[1])} ل.س</span>
+            <span className="text-xl font-bold text-gray-900">{formatPrice(localRange[1])} {translations.currencySymbol}</span>
             <div className="text-xs text-gray-500 mt-1">Maximum</div>
           </div>
         </div>
@@ -342,7 +344,7 @@ const applyFilters = useCallback(() => {
                 max="1000000"
                 step="1000"
               />
-              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">ل.س</span>
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">{translations.currencySymbol}</span>
             </div>
           </div>
           <div>
@@ -358,7 +360,7 @@ const applyFilters = useCallback(() => {
                 max="1000000"
                 step="1000"
               />
-              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">ل.س</span>
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">{translations.currencySymbol}</span>
             </div>
           </div>
         </div>
@@ -403,11 +405,11 @@ const applyFilters = useCallback(() => {
 
         {/* Price Labels */}
         <div className="flex justify-between text-xs text-gray-500">
-          <span>0 ل.س</span>
-          <span>250,000 ل.س</span>
-          <span>500,000 ل.س</span>
-          <span>750,000 ل.س</span>
-          <span>1,000,000 ل.س</span>
+          <span>0 {translations.currencySymbol}</span>
+          <span>250,000 {translations.currencySymbol}</span>
+          <span>500,000 {translations.currencySymbol}</span>
+          <span>750,000 {translations.currencySymbol}</span>
+          <span>1,000,000 {translations.currencySymbol}</span>
         </div>
 
         {/* Quick Price Presets */}
@@ -717,7 +719,7 @@ const applyFilters = useCallback(() => {
                     active={true}
                     onClick={() => handleFilterChange('priceRange', [0, 1000000])}
                   >
-                    Price: {formatPrice(filters.priceRange[0])} - {formatPrice(filters.priceRange[1])} ل.س
+                    Price: {formatPrice(filters.priceRange[0])} - {formatPrice(filters.priceRange[1])} {translations.currencySymbol}
                   </FilterChip>
                 )}
                 {filters.sizes.map(size => (

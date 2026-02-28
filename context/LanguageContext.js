@@ -1,10 +1,32 @@
 'use client';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 
 const LanguageContext = createContext();
 
-export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState("ar");
+const LOCALE_COOKIE_NAME = 'locale';
+const LOCALE_MAX_AGE = 31536000; // 1 year
+const VALID_LOCALES = ['ar', 'en'];
+
+function setLocaleCookie(value) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${LOCALE_COOKIE_NAME}=${value}; path=/; max-age=${LOCALE_MAX_AGE}; SameSite=Lax`;
+}
+
+export const LanguageProvider = ({ children, initialLocale = 'ar' }) => {
+  const [language, setLanguage] = useState(initialLocale);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Sync from URL on mount / when URL changes (e.g. shared link with ?locale=en)
+  useEffect(() => {
+    const urlLocale = searchParams.get('locale');
+    if (urlLocale && VALID_LOCALES.includes(urlLocale) && urlLocale !== language) {
+      setLanguage(urlLocale);
+      setLocaleCookie(urlLocale);
+    }
+  }, [searchParams]);
 
   const translations = {
     en: {
@@ -29,6 +51,7 @@ export const LanguageProvider = ({ children }) => {
       total: "Total",
       viewCart: "View Cart",
       switchTo: "Switch to",
+      currencySymbol: "syr",
      
       // ProductCard translations
       sale: "SALE",
@@ -560,7 +583,8 @@ export const LanguageProvider = ({ children }) => {
       total: "المجموع",
       viewCart: "عرض العربة",
       switchTo: "التغيير إلى",
-      
+      currencySymbol: "ل.س",
+
       // ProductCard translations
       sale: "تخفيض",
       outOfStock: "غير متوفر",
@@ -1387,11 +1411,25 @@ updatingRole: "جارٍ تحديث الدور...",
   };
 
   const toggleLanguage = () => {
-    setLanguage(prevLang => prevLang === "en" ? "ar" : "en");
+    const newLang = language === 'en' ? 'ar' : 'en';
+    setLanguage(newLang);
+    setLocaleCookie(newLang);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('locale', newLang);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
   };
 
   const t = (key) => {
     return translations[language]?.[key] || key;
+  };
+
+  /** Returns localized product name and description for display (English uses nameEn/descriptionEn when set). */
+  const getProductDisplay = (product) => {
+    if (!product) return { name: '', description: '' };
+    const name = language === 'en' ? (product.nameEn || product.name) : product.name;
+    const description = language === 'en' ? (product.descriptionEn || product.description) : (product.description || '');
+    return { name, description };
   };
 
   return (
@@ -1399,7 +1437,8 @@ updatingRole: "جارٍ تحديث الدور...",
       currentLanguage: language, 
       translations: translations[language],
       toggleLanguage,
-      t // Add this helper function
+      t,
+      getProductDisplay
     }}>
       {children}
     </LanguageContext.Provider>

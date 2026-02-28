@@ -12,7 +12,7 @@ export default function ReviewsPage() {
   const [productsToReview, setProductsToReview] = useState([]);
   const [activeReviewForm, setActiveReviewForm] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const { currentLanguage, translations } = useLanguage();
+  const { currentLanguage, translations, getProductDisplay } = useLanguage();
   const isRTL = currentLanguage === 'ar';
 
   // Review form state
@@ -213,7 +213,7 @@ export default function ReviewsPage() {
                         {item.product.featuredImage ? (
                           <img 
                             src={item.product.featuredImage} 
-                            alt={item.product.name}
+                            alt={getProductDisplay(item.product).name}
                             className="w-full h-full object-cover rounded"
                           />
                         ) : (
@@ -221,7 +221,7 @@ export default function ReviewsPage() {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-light text-gray-900">{item.product.name}</h3>
+                        <h3 className="font-light text-gray-900">{getProductDisplay(item.product).name}</h3>
                         <p className="text-sm text-gray-600">{translations.orderNumber || 'Order #'}: {item.order.orderNumber}</p>
                         <p className="text-xs text-gray-500">
                           {translations.deliveredOn || 'Delivered on'} {new Date(item.order.updatedAt).toLocaleDateString()}
@@ -350,7 +350,7 @@ export default function ReviewsPage() {
                         {review.product.featuredImage ? (
                           <img 
                             src={review.product.featuredImage} 
-                            alt={review.product.name}
+                            alt={getProductDisplay(review.product).name}
                             className="w-full h-full object-cover rounded"
                           />
                         ) : (
@@ -362,7 +362,7 @@ export default function ReviewsPage() {
                           href={`/products/${review.product._id}`}
                           className="font-light text-gray-900 hover:text-gray-700"
                         >
-                          {review.product.name}
+                          {getProductDisplay(review.product).name}
                         </Link>
                         <div className="flex items-center space-x-1 mt-1">
                           {[...Array(5)].map((_, i) => (

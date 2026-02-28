@@ -13,13 +13,15 @@ export default function CollectionsPage() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const { currentLanguage, translations } = useLanguage();
+  const { currentLanguage, translations, getProductDisplay } = useLanguage();
   const isRTL = currentLanguage === 'ar';
 
   // Form states
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
+    nameEn: '',
+    descriptionEn: '',
     price: '',
     originalPrice: '',
     hasDiscount: false, 
@@ -96,7 +98,7 @@ export default function CollectionsPage() {
   // Reset forms
   const resetProductForm = () => {
     setProductForm({
-      name: '', description: '', price: '', originalPrice: '', hasDiscount: false,
+      name: '', description: '', nameEn: '', descriptionEn: '', price: '', originalPrice: '', hasDiscount: false,
       category: '', subCategory: '', collection: '', sizes: [], colors: [], 
       tags: '', isFeatured: false, isActive: true
     });
@@ -274,6 +276,8 @@ export default function CollectionsPage() {
     setProductForm({
       name: product.name,
       description: product.description,
+      nameEn: product.nameEn || '',
+      descriptionEn: product.descriptionEn || '',
       price: product.price,
       originalPrice: product.originalPrice || '',
       hasDiscount: hasDiscount,
@@ -572,6 +576,32 @@ export default function CollectionsPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs sm:text-sm font-light text-gray-700 mb-2 tracking-wide">
+                  {translations.productNameEn || 'PRODUCT NAME (ENGLISH)'}
+                </label>
+                <input
+                  type="text"
+                  value={productForm.nameEn}
+                  onChange={(e) => setProductForm(prev => ({ ...prev, nameEn: e.target.value }))}
+                  placeholder="Shown when site is in English"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-light text-gray-700 mb-2 tracking-wide">
+                  {translations.descriptionEn || 'DESCRIPTION (ENGLISH)'} <span className="text-gray-400 font-normal">({translations.optional || 'Optional'})</span>
+                </label>
+                <textarea
+                  value={productForm.descriptionEn}
+                  onChange={(e) => setProductForm(prev => ({ ...prev, descriptionEn: e.target.value }))}
+                  rows="3"
+                  placeholder="Shown when site is in English"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base"
+                />
+              </div>
+
               {/* Price Section - Updated with Discount Checkbox */}
               <div className="space-y-4 sm:space-y-6">
                 {/* Discount Checkbox */}
@@ -595,7 +625,7 @@ export default function CollectionsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-xs sm:text-sm font-light text-gray-700 mb-2 tracking-wide">
-                      {productForm.hasDiscount ? (translations.discountPrice || 'PRICE AFTER DISCOUNT') : (translations.price || 'PRICE')} (ل.س)
+                      {productForm.hasDiscount ? (translations.discountPrice || 'PRICE AFTER DISCOUNT') : (translations.price || 'PRICE')} ({translations.currencySymbol})
                     </label>
                     <input
                       type="number"
@@ -611,7 +641,7 @@ export default function CollectionsPage() {
                   {productForm.hasDiscount && (
                     <div>
                       <label className="block text-xs sm:text-sm font-light text-gray-700 mb-2 tracking-wide">
-                        {translations.originalPrice || 'ORIGINAL PRICE'} (ل.س)
+                        {translations.originalPrice || 'ORIGINAL PRICE'} ({translations.currencySymbol})
                       </label>
                       <input
                         type="number"
@@ -912,7 +942,7 @@ export default function CollectionsPage() {
                       <div className="flex-shrink-0">
                         <Image
                           src={product.featuredImage}
-                          alt={product.name}
+                          alt={getProductDisplay(product).name}
                           width={60}
                           height={60}
                           className="object-cover border border-gray-300"
@@ -920,8 +950,8 @@ export default function CollectionsPage() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-light text-gray-900 text-sm sm:text-base truncate">{product.name}</h3>
-                      <p className="text-xs sm:text-sm text-gray-600 font-light">{product.price} ل.س</p>
+                      <h3 className="font-light text-gray-900 text-sm sm:text-base truncate">{getProductDisplay(product).name}</h3>
+                      <p className="text-xs sm:text-sm text-gray-600 font-light">{product.price} {translations.currencySymbol}</p>
                       <p className="text-xs text-gray-500 font-light">
                         {product.sizes?.length || 0} {translations.sizes || 'sizes'} • {product.colors?.length || 0} {translations.colors || 'colors'}
                       </p>

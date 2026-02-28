@@ -15,7 +15,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
-  const { currentLanguage, translations } = useLanguage();
+  const { currentLanguage, translations, getProductDisplay } = useLanguage();
   const isRTL = currentLanguage === 'ar';
 
   useEffect(() => {
@@ -236,7 +236,7 @@ export default function CartPage() {
                           {item.product.featuredImage ? (
                             <Image
                               src={item.product.featuredImage}
-                              alt={item.product.name}
+                              alt={getProductDisplay(item.product).name}
                               fill
                               className="object-cover"
                             />
@@ -255,7 +255,7 @@ export default function CartPage() {
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                           <div className="flex-1">
                             <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2">
-                              {item.product.name}
+                              {getProductDisplay(item.product).name}
                             </h3>
                             <p className="text-gray-600 text-sm mb-2">
                               {item.product.category?.name}
@@ -330,11 +330,11 @@ export default function CartPage() {
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-bold text-gray-900">
-                              {(item.price * item.quantity).toFixed(2)} ل.س
+                              {(item.price * item.quantity).toFixed(2)} {translations.currencySymbol}
                             </p>
                             {item.quantity > 1 && (
                               <p className="text-sm text-gray-500">
-                                {item.price.toFixed(2)} {translations.each || 'each'} ل.س
+                                {item.price.toFixed(2)} {translations.each || 'each'} {translations.currencySymbol}
                               </p>
                             )}
                           </div>
@@ -371,13 +371,13 @@ export default function CartPage() {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">{translations.subtotal || 'Subtotal'} ({cart.itemCount} {cart.itemCount === 1 ? (translations.item || 'item') : (translations.items || 'items')})</span>
-                  <span className="font-medium"> {cart.total.toFixed(2)} ل.س </span>
+                  <span className="font-medium"> {cart.total.toFixed(2)} {translations.currencySymbol} </span>
                 </div>
                 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-base font-bold">
                     <span>{translations.total || 'Total'}</span>
-                    <span className="text-lg"> {cart.total.toFixed(2)} ل.س</span>
+                    <span className="text-lg"> {cart.total.toFixed(2)} {translations.currencySymbol}</span>
                   </div>
                 </div>
               </div>
