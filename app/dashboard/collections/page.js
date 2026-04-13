@@ -1,17 +1,23 @@
 // app/dashboard/collections/page.js
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
+import { useDashboardInventory } from '@/hooks/useDashboardInventory';
 
 export default function CollectionsPage() {
   const [activeTab, setActiveTab] = useState('products');
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [collections, setCollections] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    products,
+    categories,
+    subCategories,
+    collections,
+    isLoading: referenceDataLoading,
+    error: referenceDataError,
+    mutateAll,
+  } = useDashboardInventory();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const { currentLanguage, translations, getProductDisplay } = useLanguage();
   const isRTL = currentLanguage === 'ar';
@@ -70,30 +76,8 @@ export default function CollectionsPage() {
   const [currentSize, setCurrentSize] = useState({ size: '', stock: 0 });
   const [currentColor, setCurrentColor] = useState({ name: '', hex: '#000000', images: [] });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [productsRes, categoriesRes, subCategoriesRes, collectionsRes] = await Promise.all([
-        fetch('/api/products?activeOnly=false'),
-        fetch('/api/categories?activeOnly=false'),
-        fetch('/api/subcategories?activeOnly=false'),
-        fetch('/api/collections?activeOnly=false')
-      ]);
-
-      if (productsRes.ok) setProducts(await productsRes.json());
-      if (categoriesRes.ok) setCategories(await categoriesRes.json());
-      if (subCategoriesRes.ok) setSubCategories(await subCategoriesRes.json());
-      if (collectionsRes.ok) setCollections(await collectionsRes.json());
-    } catch (error) {
-      setMessage({ type: 'error', text: translations.fetchDataFailed || 'Failed to fetch data' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const referenceSelectsDisabled =
+    referenceDataLoading || !!referenceDataError;
 
   // Reset forms
   const resetProductForm = () => {
@@ -126,19 +110,19 @@ export default function CollectionsPage() {
   // Product Management
   const handleProductSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
 
     // Check if there are colors with images
     const hasColorImages = productForm.colors.some(color => color.images && color.images.length > 0);
     if (!hasColorImages) {
       setMessage({ type: 'error', text: translations.colorImagesRequired || 'At least one color must have images' });
-      setLoading(false);
+      setIsSubmitting(false);
       return;
     }
 
     if (!productForm.category) {
       setMessage({ type: 'error', text: translations.categoryRequired || 'Category is required' });
-      setLoading(false);
+      setIsSubmitting(false);
       return;
     }
 
@@ -167,7 +151,7 @@ export default function CollectionsPage() {
       if (response.ok) {
         setMessage({ type: 'success', text: editingProduct ? (translations.productUpdated || 'Product updated successfully!') : (translations.productCreated || 'Product created successfully!') });
         resetProductForm();
-        fetchData();
+        mutateAll();
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || (editingProduct ? (translations.updateProductFailed || 'Failed to update product') : (translations.createProductFailed || 'Failed to create product')) });
@@ -175,14 +159,14 @@ export default function CollectionsPage() {
     } catch (error) {
       setMessage({ type: 'error', text: translations.networkError || 'Network error occurred' });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   // Category Management
   const handleCategorySubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
 
     try {
       const url = editingCategory ? `/api/categories/${editingCategory._id}` : '/api/categories';
@@ -197,7 +181,7 @@ export default function CollectionsPage() {
       if (response.ok) {
         setMessage({ type: 'success', text: editingCategory ? (translations.categoryUpdated || 'Category updated successfully!') : (translations.categoryCreated || 'Category created successfully!') });
         resetCategoryForm();
-        fetchData();
+        mutateAll();
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || (editingCategory ? (translations.updateCategoryFailed || 'Failed to update category') : (translations.createCategoryFailed || 'Failed to create category')) });
@@ -205,14 +189,14 @@ export default function CollectionsPage() {
     } catch (error) {
       setMessage({ type: 'error', text: translations.networkError || 'Network error occurred' });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   // SubCategory Management
   const handleSubCategorySubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
 
     try {
       const url = editingSubCategory ? `/api/subcategories/${editingSubCategory._id}` : '/api/subcategories';
@@ -227,7 +211,7 @@ export default function CollectionsPage() {
       if (response.ok) {
         setMessage({ type: 'success', text: editingSubCategory ? (translations.subCategoryUpdated || 'SubCategory updated successfully!') : (translations.subCategoryCreated || 'SubCategory created successfully!') });
         resetSubCategoryForm();
-        fetchData();
+        mutateAll();
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || (editingSubCategory ? (translations.updateSubCategoryFailed || 'Failed to update subcategory') : (translations.createSubCategoryFailed || 'Failed to create subcategory')) });
@@ -235,14 +219,14 @@ export default function CollectionsPage() {
     } catch (error) {
       setMessage({ type: 'error', text: translations.networkError || 'Network error occurred' });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   // Collection Management
   const handleCollectionSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
 
     try {
       const url = editingCollection ? `/api/collections/${editingCollection._id}` : '/api/collections';
@@ -257,7 +241,7 @@ export default function CollectionsPage() {
       if (response.ok) {
         setMessage({ type: 'success', text: editingCollection ? (translations.collectionUpdated || 'Collection updated successfully!') : (translations.collectionCreated || 'Collection created successfully!') });
         resetCollectionForm();
-        fetchData();
+        mutateAll();
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || (editingCollection ? (translations.updateCollectionFailed || 'Failed to update collection') : (translations.createCollectionFailed || 'Failed to create collection')) });
@@ -265,7 +249,7 @@ export default function CollectionsPage() {
     } catch (error) {
       setMessage({ type: 'error', text: translations.networkError || 'Network error occurred' });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -281,9 +265,9 @@ export default function CollectionsPage() {
       price: product.price,
       originalPrice: product.originalPrice || '',
       hasDiscount: hasDiscount,
-      category: product.category?._id || product.category,
-      subCategory: product.subCategory?._id || product.subCategory,
-      collection: product.collection?._id || product.collection,
+      category: product.category != null ? String(product.category._id ?? product.category) : '',
+      subCategory: product.subCategory != null ? String(product.subCategory._id ?? product.subCategory) : '',
+      collection: product.collection != null ? String(product.collection._id ?? product.collection) : '',
       sizes: product.sizes || [],
       colors: product.colors || [],
       tags: product.tags?.join(', ') || '',
@@ -307,7 +291,7 @@ export default function CollectionsPage() {
     setSubCategoryForm({
       name: subCategory.name,
       description: subCategory.description || '',
-      category: subCategory.category?._id || subCategory.category,
+      category: subCategory.category != null ? String(subCategory.category._id ?? subCategory.category) : '',
       image: subCategory.image || '',
       isActive: subCategory.isActive
     });
@@ -338,7 +322,7 @@ export default function CollectionsPage() {
 
       if (response.ok) {
         setMessage({ type: 'success', text: translations.productDeleted || 'Product deleted successfully!' });
-        fetchData();
+        mutateAll();
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || translations.deleteProductFailed || 'Failed to delete product' });
@@ -358,7 +342,7 @@ export default function CollectionsPage() {
 
       if (response.ok) {
         setMessage({ type: 'success', text: translations.categoryDeleted || 'Category deleted successfully!' });
-        fetchData();
+        mutateAll();
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || translations.deleteCategoryFailed || 'Failed to delete category' });
@@ -378,7 +362,7 @@ export default function CollectionsPage() {
 
       if (response.ok) {
         setMessage({ type: 'success', text: translations.subCategoryDeleted || 'SubCategory deleted successfully!' });
-        fetchData();
+        mutateAll();
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || translations.deleteSubCategoryFailed || 'Failed to delete subcategory' });
@@ -398,7 +382,7 @@ export default function CollectionsPage() {
 
       if (response.ok) {
         setMessage({ type: 'success', text: translations.collectionDeleted || 'Collection deleted successfully!' });
-        fetchData();
+        mutateAll();
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || translations.deleteCollectionFailed || 'Failed to delete collection' });
@@ -486,9 +470,9 @@ export default function CollectionsPage() {
     }));
   };
 
-  // Helper function for subcategory category ID
   const getSubCategoryCategoryId = (subCategory) => {
-    return subCategory.category?._id || subCategory.category;
+    const cat = subCategory.category?._id ?? subCategory.category;
+    return cat != null ? String(cat) : '';
   };
 
   return (
@@ -527,6 +511,27 @@ export default function CollectionsPage() {
           : 'bg-red-50 text-red-800 border-red-400'
           }`}>
           <span className="font-medium text-sm sm:text-base">{message.text}</span>
+        </div>
+      )}
+
+      {referenceDataLoading && (
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 border border-gray-200 bg-gray-50 text-gray-700 text-sm font-light">
+          {translations.loadingCatalog || 'Loading categories, subcategories, and collections…'}
+        </div>
+      )}
+
+      {referenceDataError && (
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 border border-red-200 bg-red-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <span className="text-red-800 text-sm font-light">
+            {referenceDataError.message || (translations.fetchDataFailed || 'Failed to load catalog data')}
+          </span>
+          <button
+            type="button"
+            onClick={() => mutateAll()}
+            className="px-4 py-2 border border-red-300 text-red-900 text-sm font-light hover:bg-red-100 transition-colors shrink-0"
+          >
+            {translations.retry || 'Retry'}
+          </button>
         </div>
       )}
 
@@ -665,10 +670,15 @@ export default function CollectionsPage() {
                   <select
                     value={productForm.category}
                     onChange={(e) => setProductForm(prev => ({ ...prev, category: e.target.value, subCategory: '' }))}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base disabled:bg-gray-50 disabled:text-gray-500"
                     required
+                    disabled={referenceSelectsDisabled}
                   >
-                    <option value="">{translations.selectCategory || 'Select Category'}</option>
+                    <option value="">
+                      {referenceDataLoading
+                        ? (translations.loading || 'Loading…')
+                        : (translations.selectCategory || 'Select Category')}
+                    </option>
                     {categories.map(cat => (
                       <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
@@ -682,11 +692,16 @@ export default function CollectionsPage() {
                   <select
                     value={productForm.subCategory}
                     onChange={(e) => setProductForm(prev => ({ ...prev, subCategory: e.target.value }))}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base disabled:bg-gray-50 disabled:text-gray-500"
+                    disabled={referenceSelectsDisabled}
                   >
-                    <option value="">{translations.selectSubcategory || 'Select Subcategory'}</option>
+                    <option value="">
+                      {referenceDataLoading
+                        ? (translations.loading || 'Loading…')
+                        : (translations.selectSubcategory || 'Select Subcategory')}
+                    </option>
                     {subCategories
-                      .filter(sub => getSubCategoryCategoryId(sub) === productForm.category)
+                      .filter(sub => getSubCategoryCategoryId(sub) === String(productForm.category))
                       .map(sub => (
                         <option key={sub._id} value={sub._id}>{sub.name}</option>
                       ))
@@ -702,9 +717,14 @@ export default function CollectionsPage() {
                 <select
                   value={productForm.collection}
                   onChange={(e) => setProductForm(prev => ({ ...prev, collection: e.target.value }))}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base disabled:bg-gray-50 disabled:text-gray-500"
+                  disabled={referenceSelectsDisabled}
                 >
-                  <option value="">{translations.selectCollection || 'Select Collection'}</option>
+                  <option value="">
+                    {referenceDataLoading
+                      ? (translations.loading || 'Loading…')
+                      : (translations.selectCollection || 'Select Collection')}
+                  </option>
                   {collections.map(col => (
                     <option key={col._id} value={col._id}>{col.name}</option>
                   ))}
@@ -921,10 +941,10 @@ export default function CollectionsPage() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isSubmitting}
                 className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-gray-900 text-white font-light tracking-wide hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-900 text-sm sm:text-base"
               >
-                {loading ? (editingProduct ? (translations.updatingProduct || 'UPDATING PRODUCT...') : (translations.creatingProduct || 'CREATING PRODUCT...')) : (editingProduct ? (translations.updateProduct || 'UPDATE PRODUCT') : (translations.createProduct || 'CREATE PRODUCT'))}
+                {isSubmitting ? (editingProduct ? (translations.updatingProduct || 'UPDATING PRODUCT...') : (translations.creatingProduct || 'CREATING PRODUCT...')) : (editingProduct ? (translations.updateProduct || 'UPDATE PRODUCT') : (translations.createProduct || 'CREATE PRODUCT'))}
               </button>
             </form>
           </div>
@@ -1075,10 +1095,10 @@ export default function CollectionsPage() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isSubmitting}
                 className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-gray-900 text-white font-light tracking-wide hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-900 text-sm sm:text-base"
               >
-                {loading ? (editingCategory ? (translations.updatingCategory || 'UPDATING CATEGORY...') : (translations.creatingCategory || 'CREATING CATEGORY...')) : (editingCategory ? (translations.updateCategory || 'UPDATE CATEGORY') : (translations.createCategory || 'CREATE CATEGORY'))}
+                {isSubmitting ? (editingCategory ? (translations.updatingCategory || 'UPDATING CATEGORY...') : (translations.creatingCategory || 'CREATING CATEGORY...')) : (editingCategory ? (translations.updateCategory || 'UPDATE CATEGORY') : (translations.createCategory || 'CREATE CATEGORY'))}
               </button>
             </form>
           </div>
@@ -1162,10 +1182,15 @@ export default function CollectionsPage() {
                 <select
                   value={subCategoryForm.category}
                   onChange={(e) => setSubCategoryForm(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-none focus:outline-none focus:border-gray-900 transition-colors bg-white font-light text-sm sm:text-base disabled:bg-gray-50 disabled:text-gray-500"
                   required
+                  disabled={referenceSelectsDisabled}
                 >
-                  <option value="">{translations.selectParentCategory || 'Select Parent Category'}</option>
+                  <option value="">
+                    {referenceDataLoading
+                      ? (translations.loading || 'Loading…')
+                      : (translations.selectParentCategory || 'Select Parent Category')}
+                  </option>
                   {categories.map(cat => (
                     <option key={cat._id} value={cat._id}>{cat.name}</option>
                   ))}
@@ -1212,10 +1237,10 @@ export default function CollectionsPage() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isSubmitting}
                 className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-gray-900 text-white font-light tracking-wide hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-900 text-sm sm:text-base"
               >
-                {loading ? (editingSubCategory ? (translations.updatingSubCategory || 'UPDATING SUBCATEGORY...') : (translations.creatingSubCategory || 'CREATING SUBCATEGORY...')) : (editingSubCategory ? (translations.updateSubCategory || 'UPDATE SUBCATEGORY') : (translations.createSubCategory || 'CREATE SUBCATEGORY'))}
+                {isSubmitting ? (editingSubCategory ? (translations.updatingSubCategory || 'UPDATING SUBCATEGORY...') : (translations.creatingSubCategory || 'CREATING SUBCATEGORY...')) : (editingSubCategory ? (translations.updateSubCategory || 'UPDATE SUBCATEGORY') : (translations.createSubCategory || 'CREATE SUBCATEGORY'))}
               </button>
             </form>
           </div>
@@ -1397,10 +1422,10 @@ export default function CollectionsPage() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isSubmitting}
                 className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-gray-900 text-white font-light tracking-wide hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-900 text-sm sm:text-base"
               >
-                {loading ? (editingCollection ? (translations.updatingCollection || 'UPDATING COLLECTION...') : (translations.creatingCollection || 'CREATING COLLECTION...')) : (editingCollection ? (translations.updateCollection || 'UPDATE COLLECTION') : (translations.createCollection || 'CREATE COLLECTION'))}
+                {isSubmitting ? (editingCollection ? (translations.updatingCollection || 'UPDATING COLLECTION...') : (translations.creatingCollection || 'CREATING COLLECTION...')) : (editingCollection ? (translations.updateCollection || 'UPDATE COLLECTION') : (translations.createCollection || 'CREATE COLLECTION'))}
               </button>
             </form>
           </div>

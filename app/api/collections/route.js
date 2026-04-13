@@ -4,6 +4,8 @@ import authOptions from "@/lib/authOptions";
 import Collection from '@/models/Collection';
 import dbConnect from '@/lib/dbConnect';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     await dbConnect();
@@ -23,7 +25,10 @@ export async function GET(request) {
 
     return new Response(JSON.stringify(collections), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'private, no-store, must-revalidate',
+      },
     });
   } catch (error) {
     console.error('Collections fetch error:', error);

@@ -9,6 +9,8 @@ import dbConnect from '@/lib/dbConnect';
 
 const DB_TIMEOUT = 30000; // 30 seconds
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   // Set timeout for the entire request
   const timeoutPromise = new Promise((_, reject) => 
@@ -19,13 +21,14 @@ export async function GET(request) {
     await Promise.race([dbConnect(), timeoutPromise]);
     
     const { searchParams } = new URL(request.url);
+    const activeOnly = searchParams.get('activeOnly') !== 'false';
     const category = searchParams.get('category');
     const subCategory = searchParams.get('subCategory');
     const collection = searchParams.get('collection');
     const featured = searchParams.get('featured');
     
-    let query = { isActive: true };
-    
+    let query = {};
+    if (activeOnly) query.isActive = true;
     if (category) query.category = category;
     if (subCategory) query.subCategory = subCategory;
     if (collection) query.collection = collection;
@@ -38,11 +41,15 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .maxTimeMS(DB_TIMEOUT);
 
+    const cacheControl = activeOnly
+      ? 'public, s-maxage=60, stale-while-revalidate=300'
+      : 'private, no-store, must-revalidate';
+
     return new Response(JSON.stringify(products), {
       status: 200,
       headers: { 
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+        'Cache-Control': cacheControl,
       }
     });
   } catch (error) {

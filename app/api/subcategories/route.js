@@ -5,6 +5,8 @@ import SubCategory from '@/models/SubCategory';
 import Category from '@/models/Category'; // Import Category model
 import dbConnect from '@/lib/dbConnect';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     await dbConnect();
@@ -22,7 +24,10 @@ export async function GET(request) {
 
     return new Response(JSON.stringify(subCategories), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'private, no-store, must-revalidate',
+      },
     });
   } catch (error) {
     console.error('Subcategories fetch error:', error);

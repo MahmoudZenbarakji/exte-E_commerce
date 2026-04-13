@@ -4,6 +4,8 @@ import authOptions from "@/lib/authOptions";
 import Category from '@/models/Category';
 import dbConnect from '@/lib/dbConnect';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     await dbConnect();
@@ -24,7 +26,10 @@ export async function GET(request) {
 
     return new Response(JSON.stringify(categories), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'private, no-store, must-revalidate',
+      },
     });
   } catch (error) {
     console.error('Categories fetch error:', error);
