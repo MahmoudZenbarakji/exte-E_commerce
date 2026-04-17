@@ -2,27 +2,66 @@
 import { getServerSession } from "next-auth/next";
 import authOptions from "@/lib/authOptions";
 import Category from '@/models/Category';
+// Ensure SubCategory is registered before virtual populate on Category (avoids intermittent
+// "Schema hasn't been registered for model SubCategory" in serverless cold starts).
+import '@/models/SubCategory';
 import dbConnect from '@/lib/dbConnect';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+/** Query params are always strings; normalize common boolean forms (incl. uppercase "False"). */
+function parseActiveOnlyParam(raw) {
+  if (raw === null || raw === undefined || raw === '') {
+    return true;
+  }
+  const v = String(raw).trim().toLowerCase();
+  if (v === 'false' || v === '0' || v === 'no') {
+    return false;
+  }
+  if (v === 'true' || v === '1' || v === 'yes') {
+    return true;
+  }
+  return true;
+}
+
+function normalizeCategoriesPayload(docs) {
+  const list = Array.isArray(docs) ? docs : [];
+  return list
+    .filter((doc) => doc != null && typeof doc === 'object')
+    .map((doc) => {
+      const subCategories = Array.isArray(doc.subCategories)
+        ? doc.subCategories.filter((s) => s != null)
+        : [];
+      return { ...doc, subCategories };
+    });
+}
 
 export async function GET(request) {
   try {
-    await dbConnect();
-    
+    const conn = await dbConnect();
+    if (!conn) {
+      throw new Error('Database is not configured (MONGODB_URI missing)');
+    }
+
     const { searchParams } = new URL(request.url);
-    const activeOnly = searchParams.get('activeOnly') !== 'false';
-    
-    let query = {};
-    if (activeOnly) query.isActive = true;
-    
-    const categories = await Category.find(query)
+    const activeOnly = parseActiveOnlyParam(searchParams.get('activeOnly'));
+
+    const query = {};
+    if (activeOnly) {
+      query.isActive = true;
+    }
+
+    const raw = await Category.find(query)
       .populate({
         path: 'subCategories',
         match: activeOnly ? { isActive: true } : {},
-        options: { sort: { order: 1, name: 1 } }
+        options: { sort: { order: 1, name: 1 } },
       })
-      .sort({ order: 1, name: 1 });
+      .sort({ order: 1, name: 1 })
+      .lean({ virtuals: true });
+
+    const categories = normalizeCategoriesPayload(raw);
 
     return new Response(JSON.stringify(categories), {
       status: 200,
@@ -33,6 +72,9 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('Categories fetch error:', error);
+    if (error instanceof Error && error.stack) {
+      console.error(error.stack);
+    }
     return new Response(JSON.stringify({ error: 'Failed to fetch categories' }), {
       status: 500,
     });
