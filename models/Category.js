@@ -48,6 +48,4 @@ CategorySchema.virtual('productCount', {
 CategorySchema.set('toJSON', { virtuals: true });
 CategorySchema.set('toObject', { virtuals: true });
 
-CategorySchema.index({ isActive: 1, order: 1 });
-
 export default mongoose.models.Category || mongoose.model('Category', CategorySchema);

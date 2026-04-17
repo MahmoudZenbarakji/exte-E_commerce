@@ -2,20 +2,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'res.cloudinary.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com', pathname: '/**' },
-    ],
+    domains: ['res.cloudinary.com'],
     formats: ['image/avif', 'image/webp'],
+    // Increase timeout for Cloudinary images
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Optional: Disable image optimization in development
     ...(process.env.NODE_ENV === 'development' && {
-      unoptimized: true,
-    }),
+      unoptimized: true
+    })
   },
-  serverExternalPackages: ['mongoose'],
+  // Increase timeout for API routes
+  experimental: {
+    serverComponentsExternalPackages: ['mongoose'],
+  },
+  // Optional: Increase static generation timeout
   staticPageGenerationTimeout: 1000,
-};
+}
 
 export default nextConfig;

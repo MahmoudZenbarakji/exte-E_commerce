@@ -4,7 +4,8 @@ import authOptions from "@/lib/authOptions";
 import SubCategory from '@/models/SubCategory';
 import Category from '@/models/Category'; // Import Category model
 import dbConnect from '@/lib/dbConnect';
-import { getPagination } from '@/lib/pagination';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
@@ -15,27 +16,17 @@ export async function GET(request) {
     
     let query = {};
     if (activeOnly) query.isActive = true;
-
-    const { limit, skip } = getPagination(searchParams, { maxLimit: 500 });
-
-    let q = SubCategory.find(query)
-      .populate('category', 'name _id')
+    
+    // Populate the category field with category data
+    const subCategories = await SubCategory.find(query)
+      .populate('category', 'name _id') // Populate with category name and _id
       .sort({ name: 1 });
-
-    if (skip) q = q.skip(skip);
-    if (limit != null) q = q.limit(limit);
-
-    const subCategories = await q;
-
-    const cacheControl = activeOnly
-      ? 'public, s-maxage=60, stale-while-revalidate=300'
-      : 'private, no-store, must-revalidate';
 
     return new Response(JSON.stringify(subCategories), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': cacheControl,
+        'Cache-Control': 'private, no-store, must-revalidate',
       },
     });
   } catch (error) {

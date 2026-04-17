@@ -53,29 +53,13 @@ export async function GET() {
     const heroSection = await HeroSection.findOne().sort({ createdAt: -1 });
     
     if (!heroSection) {
-      return NextResponse.json(
-        { imageUrl: null, publicId: null },
-        {
-          status: 200,
-          headers: {
-            'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
-          },
-        }
-      );
+      return NextResponse.json({ imageUrl: null, publicId: null }, { status: 200 });
     }
-
-    return NextResponse.json(
-      {
-        imageUrl: heroSection.imageUrl,
-        publicId: heroSection.publicId,
-      },
-      {
-        status: 200,
-        headers: {
-          'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
-        },
-      }
-    );
+    
+    return NextResponse.json({
+      imageUrl: heroSection.imageUrl,
+      publicId: heroSection.publicId
+    }, { status: 200 });
   } catch (error) {
     console.error('Error fetching hero section:', error);
     return NextResponse.json({ error: 'Failed to fetch hero section' }, { status: 500 });

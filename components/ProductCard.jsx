@@ -44,6 +44,9 @@ const ProductCard = ({ product }) => {
     const handleQuickAdd = (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // TODO: Implement quick add to cart functionality
+        console.log('Quick add:', product._id);
     };
 
     const handleImageLoad = () => {

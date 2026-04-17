@@ -7,24 +7,31 @@ import dbConnect from '@/lib/dbConnect';
 // app/api/users/route.js - Updated GET function
 export async function GET() {
   try {
+    // Add logging to see if the session is being retrieved at all
+    console.log("Attempting to get server session...");
     const session = await getServerSession(authOptions);
-
+    console.log("Session retrieved:", session);
+    
     if (!session) {
+      console.log("No session found");
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
       });
     }
-
+    
+    // Add detailed user info logging
+    console.log("User role from session:", session.user?.role);
+    console.log("Full user object:", session.user);
+    
     if (session.user.role !== 'admin') {
+      console.log("User role is not admin");
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
       });
     }
 
     await dbConnect();
-    const users = await User.find({})
-      .select('firstName lastName email role image createdAt')
-      .lean();
+    const users = await User.find({}).select('-password');
     
     return new Response(JSON.stringify({ users }), {
       status: 200,

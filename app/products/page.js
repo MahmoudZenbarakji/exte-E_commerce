@@ -1,27 +1,19 @@
 // app/products/page.js
 'use client';
-import { useState, useCallback, useMemo, Suspense } from 'react';
-import useSWR from 'swr';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import ProductCard from '@/components/ProductCard';
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/context/LanguageContext';
-import { jsonFetcher } from '@/lib/swr-fetcher';
-
-async function fetchCatalogFilters() {
-  const [categories, subCategories, collections] = await Promise.all([
-    jsonFetcher('/api/categories?activeOnly=true'),
-    jsonFetcher('/api/subcategories?activeOnly=true'),
-    jsonFetcher('/api/collections?activeOnly=true'),
-  ]);
-  return {
-    categories: Array.isArray(categories) ? categories : [],
-    subCategories: Array.isArray(subCategories) ? subCategories : [],
-    collections: Array.isArray(collections) ? collections : [],
-  };
-}
+import { Toaster } from 'react-hot-toast';
 
 // ProductsPageContent component - No URL updates
 function ProductsPageContent() {
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [collections, setCollections] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState({
     category: '',
@@ -33,27 +25,8 @@ function ProductsPageContent() {
     search: ''
   });
   
-  const { translations } = useLanguage();
-
-  const {
-    data: allProducts = [],
-    error: productsError,
-    isLoading: productsLoading,
-  } = useSWR('/api/products', jsonFetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 20000,
-  });
-
-  const { data: filterBundle } = useSWR('catalog-filters-v1', fetchCatalogFilters, {
-    revalidateOnFocus: false,
-    dedupingInterval: 20000,
-  });
-
-  const categories = filterBundle?.categories ?? [];
-  const subCategories = filterBundle?.subCategories ?? [];
-  const collections = filterBundle?.collections ?? [];
-
-  const loading = productsLoading && !allProducts?.length;
+  const { currentLanguage, translations } = useLanguage();
+  const isRTL = currentLanguage === 'ar';
 
   // Available filter options
   const sizeOptions = [
@@ -75,71 +48,130 @@ function ProductsPageContent() {
     return new Intl.NumberFormat('en-US').format(price);
   };
 
-  const filteredProducts = useMemo(() => {
-    if (!Array.isArray(allProducts) || allProducts.length === 0) return [];
+  // Fetch all products and filter options on component mount
+  useEffect(() => {
+    fetchAllProducts();
+    fetchFilterOptions();
+  }, []);
 
-    let filtered = [...allProducts];
-
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      filtered = filtered.filter(
-        (product) =>
-          product.name?.toLowerCase().includes(searchTerm) ||
-          product.nameEn?.toLowerCase().includes(searchTerm) ||
-          product.description?.toLowerCase().includes(searchTerm) ||
-          product.descriptionEn?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    if (filters.category) {
-      filtered = filtered.filter((product) => {
-        const productCategoryId = product.category?._id || product.category;
-        return productCategoryId === filters.category;
-      });
-    }
-
-    if (filters.subCategory) {
-      filtered = filtered.filter((product) => {
-        const productSubCategoryId = product.subCategory?._id || product.subCategory;
-        return productSubCategoryId === filters.subCategory;
-      });
-    }
-
-    if (filters.collection) {
-      filtered = filtered.filter((product) => {
-        const productCollectionId = product.collection?._id || product.collection;
-        return productCollectionId === filters.collection;
-      });
-    }
-
-    filtered = filtered.filter(
-      (product) =>
-        product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1]
-    );
-
-    if (filters.sizes.length > 0) {
-      filtered = filtered.filter((product) =>
-        product.sizes?.some((size) => filters.sizes.includes(size.size))
-      );
-    }
-
-    switch (filters.sort) {
-      case 'price-low':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'name':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'newest':
-      default:
-        break;
-    }
-
-    return filtered;
+  // Apply filters whenever filters state changes
+  useEffect(() => {
+    applyFilters();
   }, [filters, allProducts]);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [categoriesRes, subCategoriesRes, collectionsRes] = await Promise.all([
+        fetch('/api/categories?activeOnly=true'),
+        fetch('/api/subcategories?activeOnly=true'),
+        fetch('/api/collections?activeOnly=true')
+      ]);
+
+      if (categoriesRes.ok) setCategories(await categoriesRes.json());
+      if (subCategoriesRes.ok) setSubCategories(await subCategoriesRes.json());
+      if (collectionsRes.ok) setCollections(await collectionsRes.json());
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    }
+  };
+
+  const fetchAllProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/products');
+      if (response.ok) {
+        const data = await response.json();
+        setAllProducts(data);
+        setFilteredProducts(data);
+      } else {
+        console.error('Failed to fetch products');
+        setAllProducts([]);
+        setFilteredProducts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setAllProducts([]);
+      setFilteredProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+const applyFilters = useCallback(() => {
+  if (allProducts.length === 0) return;
+
+  let filtered = [...allProducts];
+
+  // Apply search filter (include English fields when set)
+  if (filters.search) {
+    const searchTerm = filters.search.toLowerCase();
+    filtered = filtered.filter(product =>
+      product.name?.toLowerCase().includes(searchTerm) ||
+      product.nameEn?.toLowerCase().includes(searchTerm) ||
+      product.description?.toLowerCase().includes(searchTerm) ||
+      product.descriptionEn?.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  // Apply category filter - FIXED
+  if (filters.category) {
+    filtered = filtered.filter(product => {
+      // Handle both string ID and object with _id
+      const productCategoryId = product.category?._id || product.category;
+      return productCategoryId === filters.category;
+    });
+  }
+
+  // Apply subcategory filter - FIXED
+  if (filters.subCategory) {
+    filtered = filtered.filter(product => {
+      // Handle both string ID and object with _id
+      const productSubCategoryId = product.subCategory?._id || product.subCategory;
+      return productSubCategoryId === filters.subCategory;
+    });
+  }
+
+  // Apply collection filter - FIXED
+  if (filters.collection) {
+    filtered = filtered.filter(product => {
+      // Handle both string ID and object with _id
+      const productCollectionId = product.collection?._id || product.collection;
+      return productCollectionId === filters.collection;
+    });
+  }
+
+  // Apply price range filter
+  filtered = filtered.filter(product => 
+    product.price >= filters.priceRange[0] && 
+    product.price <= filters.priceRange[1]
+  );
+
+  // Apply size filter
+  if (filters.sizes.length > 0) {
+    filtered = filtered.filter(product => 
+      product.sizes?.some(size => filters.sizes.includes(size.size))
+    );
+  }
+
+  // Apply sorting
+  switch (filters.sort) {
+    case 'price-low':
+      filtered.sort((a, b) => a.price - b.price);
+      break;
+    case 'price-high':
+      filtered.sort((a, b) => b.price - a.price);
+      break;
+    case 'name':
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case 'newest':
+    default:
+      // Keep original order or sort by date if available
+      break;
+  }
+
+  setFilteredProducts(filtered);
+}, [filters, allProducts]);
 
   const updateFilters = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
@@ -267,7 +299,7 @@ function ProductsPageContent() {
 
     useEffect(() => {
       setLocalRange(filters.priceRange);
-    }, [filters.priceRange[0], filters.priceRange[1]]);
+    }, [filters.priceRange]);
 
     const handleChange = (values) => {
       setLocalRange(values);
@@ -837,12 +869,6 @@ function ProductsPageContent() {
                   {hasActiveFilters && (
                     <p className="text-gray-600 mt-1">Based on your filters</p>
                   )}
-                  {productsError && (
-                    <p className="text-sm text-amber-700 mt-2" role="alert">
-                      {translations.loadError ||
-                        'Some catalog data could not be refreshed. Showing the last loaded results.'}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -939,6 +965,30 @@ function ProductsLoading() {
           </div>
         </div>
       </div>
+          <Toaster 
+      position="top-right"
+      toastOptions={{
+        duration: 4000,
+        style: {
+          background: '#363636',
+          color: '#fff',
+        },
+        success: {
+          duration: 3000,
+          theme: {
+            primary: 'green',
+            secondary: 'black',
+          },
+        },
+        error: {
+          duration: 5000,
+          style: {
+            background: '#ef4444',
+            color: '#fff',
+          },
+        },
+      }}
+    />
     </div>
   );
 }

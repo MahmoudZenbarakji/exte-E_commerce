@@ -50,6 +50,7 @@ export async function POST(request) {
 
     await newUser.save();
     
+    console.log(`User created with email: ${newUser.email}`);
     
     return NextResponse.json(
       { 
