@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function ReviewsPage() {
@@ -57,7 +58,7 @@ export default function ReviewsPage() {
   };
 
   const handleDeleteReview = async (reviewId) => {
-    if (!confirm(t.confirmDeleteReview || 'Are you sure you want to delete this review?')) return;
+    if (!confirm(translations.confirmDeleteReview || 'Are you sure you want to delete this review?')) return;
 
     try {
       const response = await fetch(`/api/reviews/${reviewId}`, {
@@ -67,11 +68,11 @@ export default function ReviewsPage() {
       if (response.ok) {
         setReviews(reviews.filter(review => review._id !== reviewId));
       } else {
-        alert(t.deleteReviewFailed || 'Failed to delete review');
+        alert(translations.deleteReviewFailed || 'Failed to delete review');
       }
     } catch (error) {
       console.error('Error deleting review:', error);
-      alert(t.deleteReviewFailed || 'Failed to delete review');
+      alert(translations.deleteReviewFailed || 'Failed to delete review');
     }
   };
 
@@ -106,12 +107,12 @@ export default function ReviewsPage() {
 
   const handleSubmitReview = async (productId) => {
     if (!reviewForm.rating) {
-      alert(t.selectRating || 'Please select a rating');
+      alert(translations.selectRating || 'Please select a rating');
       return;
     }
 
     if (!reviewForm.title && !reviewForm.comment) {
-      alert(t.provideTitleOrComment || 'Please provide either a title or comment');
+      alert(translations.provideTitleOrComment || 'Please provide either a title or comment');
       return;
     }
 
@@ -145,14 +146,14 @@ export default function ReviewsPage() {
         // Close the form
         handleCloseReviewForm();
         
-        alert(t.reviewSubmitted || 'Review submitted successfully!');
+        alert(translations.reviewSubmitted || 'Review submitted successfully!');
       } else {
         const error = await response.json();
-        alert(error.error || t.submitReviewFailed || 'Failed to submit review');
+        alert(error.error || translations.submitReviewFailed || 'Failed to submit review');
       }
     } catch (error) {
       console.error('Error submitting review:', error);
-      alert(t.submitReviewFailed || 'Failed to submit review');
+      alert(translations.submitReviewFailed || 'Failed to submit review');
     } finally {
       setSubmitting(false);
     }
@@ -211,9 +212,11 @@ export default function ReviewsPage() {
                     <div className="flex items-center space-x-4">
                       <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
                         {item.product.featuredImage ? (
-                          <img 
-                            src={item.product.featuredImage} 
+                          <Image
+                            src={item.product.featuredImage}
                             alt={getProductDisplay(item.product).name}
+                            width={64}
+                            height={64}
                             className="w-full h-full object-cover rounded"
                           />
                         ) : (
@@ -261,7 +264,7 @@ export default function ReviewsPage() {
                           ))}
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          {reviewForm.rating > 0 ? `${reviewForm.rating} ${reviewForm.rating > 1 ? t.stars || 'stars' : translations.star || 'star'}` : translations.selectRating || 'Select a rating'}
+                          {reviewForm.rating > 0 ? `${reviewForm.rating} ${reviewForm.rating > 1 ? translations.stars || 'stars' : translations.star || 'star'}` : translations.selectRating || 'Select a rating'}
                         </p>
                       </div>
 
@@ -348,9 +351,11 @@ export default function ReviewsPage() {
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
                         {review.product.featuredImage ? (
-                          <img 
-                            src={review.product.featuredImage} 
+                          <Image
+                            src={review.product.featuredImage}
                             alt={getProductDisplay(review.product).name}
+                            width={48}
+                            height={48}
                             className="w-full h-full object-cover rounded"
                           />
                         ) : (

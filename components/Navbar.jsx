@@ -13,8 +13,6 @@ import Link from 'next/link';
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import useSWR from 'swr';
 
-const fetcher = (url) => fetch(url).then(res => res.json());
-
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -30,18 +28,16 @@ export default function Navbar() {
   // Fetch notifications using SWR
   const { data: notificationData, mutate: mutateNotifications } = useSWR(
     session ? '/api/notifications' : null,
-    fetcher,
-    { refreshInterval: 30000 }
+    { refreshInterval: 60000 }
   );
 
-  // Fetch cart data for users only
+  // Fetch cart data for users only (moderate polling to reduce API load)
   const { data: cartData, mutate: mutateCart } = useSWR(
     session && session.user?.role === 'user' ? '/api/cart' : null,
-    fetcher,
-    { 
-      refreshInterval: 5000,
+    {
+      refreshInterval: 30000,
       revalidateOnFocus: true,
-      revalidateOnReconnect: true
+      revalidateOnReconnect: true,
     }
   );
 
@@ -306,10 +302,13 @@ export default function Navbar() {
                             <MenuItem key={item._id}>
                               <div className="flex items-center space-x-3 p-4 hover:bg-gray-50 transition-colors">
                                 {item.product?.featuredImage && (
-                                  <img
+                                  <Image
                                     src={item.product.featuredImage}
                                     alt={getProductDisplay(item.product).name}
+                                    width={48}
+                                    height={48}
                                     className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                                    sizes="48px"
                                   />
                                 )}
                                 <div className="flex-1 min-w-0">

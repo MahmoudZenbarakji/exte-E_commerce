@@ -2,6 +2,7 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function UsersPage() {
@@ -112,10 +113,13 @@ export default function UsersPage() {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10">
                         {user.image ? (
-                          <img
+                          <Image
                             className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover border border-gray-300"
                             src={user.image}
                             alt={`${user.firstName} ${user.lastName}`}
+                            width={40}
+                            height={40}
+                            unoptimized
                           />
                         ) : (
                           <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gray-200 rounded-full flex items-center justify-center border border-gray-300">
@@ -203,10 +207,13 @@ export default function UsersPage() {
                 <div className="flex items-center">
                   <div className="flex-shrink-0 h-10 w-10">
                     {user.image ? (
-                      <img
+                      <Image
                         className="h-10 w-10 rounded-full object-cover border border-gray-300"
                         src={user.image}
                         alt={`${user.firstName} ${user.lastName}`}
+                        width={40}
+                        height={40}
+                        unoptimized
                       />
                     ) : (
                       <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center border border-gray-300">

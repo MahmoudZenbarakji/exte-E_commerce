@@ -137,13 +137,6 @@ const handleAddToCart = async () => {
       return;
     }
 
-    console.log('Sending to cart:', {
-      productId: product._id,
-      size: selectedSize,
-      color: product.colors?.find(color => color.name === selectedColor),
-      quantity: quantity
-    });
-
     const response = await fetch('/api/cart', {
       method: 'POST',
       headers: {
@@ -158,7 +151,6 @@ const handleAddToCart = async () => {
     });
 
     const result = await response.json();
-    console.log('Cart response:', { status: response.status, result });
 
     if (response.ok) {
       toast.success(t('productAddedToCart'));

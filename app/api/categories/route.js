@@ -6,8 +6,8 @@ import Category from '@/models/Category';
 // "Schema hasn't been registered for model SubCategory" in serverless cold starts).
 import '@/models/SubCategory';
 import dbConnect from '@/lib/dbConnect';
+import { getPagination } from '@/lib/pagination';
 
-export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 /** Query params are always strings; normalize common boolean forms (incl. uppercase "False"). */
@@ -52,22 +52,39 @@ export async function GET(request) {
       query.isActive = true;
     }
 
-    const raw = await Category.find(query)
+    const sortParam = searchParams.get('sort');
+    let sort = { order: 1, name: 1 };
+    if (sortParam === '-createdAt' || sortParam === 'createdAt') {
+      sort = sortParam.startsWith('-') ? { createdAt: -1 } : { createdAt: 1 };
+    }
+
+    const { limit, skip } = getPagination(searchParams, { maxLimit: 200 });
+
+    let q = Category.find(query)
       .populate({
         path: 'subCategories',
         match: activeOnly ? { isActive: true } : {},
         options: { sort: { order: 1, name: 1 } },
       })
-      .sort({ order: 1, name: 1 })
+      .sort(sort)
       .lean({ virtuals: true });
 
+    if (skip) q = q.skip(skip);
+    if (limit != null) q = q.limit(limit);
+
+    const raw = await q;
+
     const categories = normalizeCategoriesPayload(raw);
+
+    const cacheControl = activeOnly
+      ? 'public, s-maxage=60, stale-while-revalidate=300'
+      : 'private, no-store, must-revalidate';
 
     return new Response(JSON.stringify(categories), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'private, no-store, must-revalidate',
+        'Cache-Control': cacheControl,
       },
     });
   } catch (error) {

@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useLanguage } from "@/context/LanguageContext";
 
 function Footer() {
   const [currentYear, setCurrentYear] = useState('2024')
+  const [logoOk, setLogoOk] = useState(true)
   const { translations } = useLanguage();
 
   useEffect(() => {
@@ -40,19 +42,20 @@ function Footer() {
           {/* Logo Section */}
           <div className="logo-section">
             <div className="logo-container">
-              <img
-                src="/exte-logo.png"
-                alt="EXET"
-                className="footer-logo"
-                onError={(e) => {
-                  // Fallback if logo doesn't load
-                  e.target.style.display = 'none'
-                  e.target.nextSibling.style.display = 'block'
-                }}
-              />
-              <div className="logo-fallback" style={{ display: 'none' }}>
-                <span className="logo-text">EXET</span>
-              </div>
+              {logoOk ? (
+                <Image
+                  src="/exte-logo.png"
+                  alt="EXET"
+                  width={160}
+                  height={48}
+                  className="footer-logo h-auto w-auto max-w-[160px]"
+                  onError={() => setLogoOk(false)}
+                />
+              ) : (
+                <div className="logo-fallback">
+                  <span className="logo-text">EXET</span>
+                </div>
+              )}
             </div>
             <p className="brand-description ">
               {translations.brandDescription}

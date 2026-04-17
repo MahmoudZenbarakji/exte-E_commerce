@@ -3,8 +3,7 @@ import { getServerSession } from "next-auth/next";
 import authOptions from "@/lib/authOptions";
 import Collection from '@/models/Collection';
 import dbConnect from '@/lib/dbConnect';
-
-export const dynamic = 'force-dynamic';
+import { getPagination } from '@/lib/pagination';
 
 export async function GET(request) {
   try {
@@ -19,15 +18,32 @@ export async function GET(request) {
     if (activeOnly) query.isActive = true;
     if (featured === 'true') query.featured = true;
     if (season) query.season = season;
-    
-    const collections = await Collection.find(query)
-      .sort({ featured: -1, year: -1, name: 1 });
+
+    const sortParam = searchParams.get('sort') || '';
+    const sort =
+      sortParam === '-createdAt' || sortParam === 'createdAt'
+        ? sortParam.startsWith('-')
+          ? { createdAt: -1 }
+          : { createdAt: 1 }
+        : { featured: -1, year: -1, name: 1 };
+
+    const { limit, skip } = getPagination(searchParams, { maxLimit: 200 });
+
+    let q = Collection.find(query).sort(sort);
+    if (skip) q = q.skip(skip);
+    if (limit != null) q = q.limit(limit);
+
+    const collections = await q;
+
+    const cacheControl = activeOnly
+      ? 'public, s-maxage=60, stale-while-revalidate=300'
+      : 'private, no-store, must-revalidate';
 
     return new Response(JSON.stringify(collections), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'private, no-store, must-revalidate',
+        'Cache-Control': cacheControl,
       },
     });
   } catch (error) {

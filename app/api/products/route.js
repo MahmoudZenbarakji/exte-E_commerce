@@ -6,10 +6,9 @@ import Category from '@/models/Category';
 import SubCategory from '@/models/SubCategory';
 import Collection from '@/models/Collection';
 import dbConnect from '@/lib/dbConnect';
+import { getPagination } from '@/lib/pagination';
 
 const DB_TIMEOUT = 30000; // 30 seconds
-
-export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   // Set timeout for the entire request
@@ -33,17 +32,30 @@ export async function GET(request) {
     if (subCategory) query.subCategory = subCategory;
     if (collection) query.collection = collection;
     if (featured === 'true') query.isFeatured = true;
-    
-    const products = await Product.find(query)
+
+    const sortParam = searchParams.get('sort') || '-createdAt';
+    const sort =
+      sortParam === 'name'
+        ? { name: 1 }
+        : sortParam === '-name'
+          ? { name: -1 }
+          : sortParam === 'createdAt'
+            ? { createdAt: 1 }
+            : { createdAt: -1 };
+
+    const { limit, skip } = getPagination(searchParams, { maxLimit: 500 });
+
+    let q = Product.find(query)
       .populate('category', 'name')
       .populate('subCategory', 'name')
       .populate('collection', 'name')
-      .sort({ createdAt: -1 })
+      .sort(sort)
       .maxTimeMS(DB_TIMEOUT);
 
-    const cacheControl = activeOnly
-      ? 'public, s-maxage=60, stale-while-revalidate=300'
-      : 'private, no-store, must-revalidate';
+    if (skip) q = q.skip(skip);
+    if (limit != null) q = q.limit(limit);
+
+    const products = await q;
 
     return new Response(JSON.stringify(products), {
       status: 200,

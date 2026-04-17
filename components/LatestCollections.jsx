@@ -1,52 +1,40 @@
 
 // components/LatestCollections.jsx
 'use client';
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import useSWR from 'swr';
 import { useLanguage } from "@/context/LanguageContext";
+import { jsonFetcher } from '@/lib/swr-fetcher';
+
+async function fetchHomeLatest() {
+  const [collections, products, categories] = await Promise.all([
+    jsonFetcher('/api/collections?activeOnly=true&limit=2&sort=-createdAt'),
+    jsonFetcher('/api/products?activeOnly=true&limit=2&sort=-createdAt'),
+    jsonFetcher('/api/categories?activeOnly=true&limit=2&sort=-createdAt'),
+  ]);
+  return {
+    collections: Array.isArray(collections) ? collections.slice(0, 2) : [],
+    products: Array.isArray(products) ? products.slice(0, 2) : [],
+    categories: Array.isArray(categories) ? categories.slice(0, 2) : [],
+  };
+}
 
 const LatestCollections = () => {
-  const [latestData, setLatestData] = useState({
+  const { translations, getProductDisplay } = useLanguage();
+  const { data: latestData, isLoading: loading } = useSWR('home-latest-v1', fetchHomeLatest, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+    shouldRetryOnError: true,
+  });
+
+  const safeData = latestData || {
     collections: [],
     products: [],
-    categories: []
-  });
-  const [loading, setLoading] = useState(true);
-  const { translations, getProductDisplay } = useLanguage();
-
-  useEffect(() => {
-    fetchLatestData();
-  }, []);
-
-  const fetchLatestData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch latest collections, products, and categories
-      const [collectionsRes, productsRes, categoriesRes] = await Promise.all([
-        fetch('/api/collections?limit=2&sort=-createdAt'),
-        fetch('/api/products?limit=2&sort=-createdAt'),
-        fetch('/api/categories?limit=2&sort=-createdAt')
-      ]);
-
-      const collections = await collectionsRes.json();
-      const products = await productsRes.json();
-      const categories = await categoriesRes.json();
-
-      setLatestData({
-        collections: collections.slice(0, 2),
-        products: products.slice(0, 2),
-        categories: categories.slice(0, 2)
-      });
-    } catch (error) {
-      console.error('Error fetching latest data:', error);
-    } finally {
-      setLoading(false);
-    }
+    categories: [],
   };
 
-  if (loading) {
+  if (loading && !latestData) {
     return (
       <section className="py-16 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -378,17 +366,17 @@ const LatestCollections = () => {
         {/* Grid Layout with Different Card Sizes */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Collections - Large wide cards spanning 2 columns */}
-          {latestData.collections.map((collection, index) => (
+          {safeData.collections.map((collection, index) => (
             <CollectionCard key={collection._id} collection={collection} index={index} />
           ))}
 
           {/* Products - Small cards in single column */}
-          {latestData.products.map((product, index) => (
+          {safeData.products.map((product, index) => (
             <ProductCard key={product._id} product={product} index={index} />
           ))}
 
           {/* Categories - Smaller cards in single column */}
-          {latestData.categories.map((category, index) => (
+          {safeData.categories.map((category, index) => (
             <CategoryCard key={category._id} category={category} index={index} />
           ))}
 

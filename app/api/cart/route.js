@@ -36,7 +36,10 @@ export async function GET() {
       }, { status: 500 });
     }
 
-    const cart = await Cart.findOne({ user: session.user.id }).populate('items.product');
+    const cart = await Cart.findOne({ user: session.user.id }).populate({
+      path: 'items.product',
+      select: 'name nameEn featuredImage price originalPrice colors isActive',
+    });
     
     // If no cart exists, return empty cart
     if (!cart) {
@@ -64,52 +67,37 @@ export async function GET() {
 
 export async function POST(req) {
   try {
-    console.log('=== CART POST REQUEST START ===');
-    
     const session = await getServerSession(authOptions);
-    console.log('Session:', session ? 'Exists' : 'No session');
-    
+
     if (!session?.user?.id) {
-      console.log('No user ID in session');
       return NextResponse.json({ 
         error: 'يرجى تسجيل الدخول لإضافة منتجات إلى السلة' 
       }, { status: 401 });
     }
 
     const body = await req.json();
-    console.log('Request body:', body);
-    
+
     const { productId, size, color, quantity = 1 } = body;
 
-    console.log('Adding to cart:', { productId, size, color, quantity, userId: session.user.id });
-
     if (!productId || !size) {
-      console.log('Missing required fields:', { productId, size });
       return NextResponse.json({ 
         error: 'معرف المنتج والمقاس مطلوبان' 
       }, { status: 400 });
     }
 
-    console.log('Connecting to DB...');
     const dbConnected = await ensureDbConnection();
     if (!dbConnected) {
-      console.log('DB connection failed');
       return NextResponse.json({ 
         error: 'فشل الاتصال بقاعدة البيانات' 
       }, { status: 500 });
     }
-    console.log('DB connected successfully');
 
-    // Get product details with stock information
-    console.log('Finding product:', productId);
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).select('name price sizes');
     if (!product) {
-      console.log('Product not found:', productId);
       return NextResponse.json({ 
         error: 'المنتج غير موجود' 
       }, { status: 404 });
     }
-    console.log('Product found:', product.name);
 
     // Check stock availability for the selected size
     const selectedSize = product.sizes.find(s => s.size === size);
@@ -119,40 +107,24 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    // Find or create cart for user
-    console.log('Finding or creating cart for user:', session.user.id);
     let cart = await Cart.findOne({ user: session.user.id });
 
     if (!cart) {
-      console.log('Creating new cart for user');
       cart = new Cart({
         user: session.user.id,
         items: []
       });
     }
 
-    console.log('Cart found/created:', cart ? 'Yes' : 'No');
-
-    // Check if item already exists in cart
-    console.log('Checking for existing item in cart...');
     const existingItemIndex = cart.items.findIndex(
-      item => {
+      (item) => {
         const itemProductId = item.product.toString ? item.product.toString() : item.product;
         const isSameProduct = itemProductId === productId;
         const isSameSize = item.size === size;
         const isSameColor = item.color?.name === color?.name;
-        
-        console.log('Item comparison:', {
-          itemProductId, productId, isSameProduct,
-          itemSize: item.size, newSize: size, isSameSize,
-          itemColor: item.color?.name, newColor: color?.name, isSameColor
-        });
-        
         return isSameProduct && isSameSize && isSameColor;
       }
     );
-
-    console.log('Existing item index:', existingItemIndex);
 
     let newQuantity = quantity;
     if (existingItemIndex > -1) {
@@ -178,12 +150,8 @@ export async function POST(req) {
     }
 
     if (existingItemIndex > -1) {
-      // Update quantity if item exists
-      console.log('Updating existing item quantity:', cart.items[existingItemIndex].quantity, '->', cart.items[existingItemIndex].quantity + quantity);
       cart.items[existingItemIndex].quantity += quantity;
     } else {
-      // Add new item
-      console.log('Adding new item to cart');
       const newItem = {
         product: productId,
         size,
@@ -191,20 +159,15 @@ export async function POST(req) {
         quantity,
         price: product.price
       };
-      console.log('New item data:', newItem);
       cart.items.push(newItem);
     }
 
-    console.log('Saving cart...');
     await cart.save();
-    console.log('Cart saved successfully');
-    
-    // Repopulate the cart after save
-    console.log('Repopulating cart...');
-    const updatedCart = await Cart.findOne({ user: session.user.id }).populate('items.product');
 
-    console.log('Returning updated cart with', updatedCart.items.length, 'items');
-    console.log('=== CART POST REQUEST END ===');
+    const updatedCart = await Cart.findOne({ user: session.user.id }).populate({
+      path: 'items.product',
+      select: 'name nameEn featuredImage price originalPrice colors isActive',
+    });
 
     return NextResponse.json({
       message: 'تمت إضافة المنتج إلى السلة',
@@ -213,13 +176,8 @@ export async function POST(req) {
       itemCount: updatedCart.itemCount
     });
   } catch (error) {
-    console.error('=== CART POST ERROR ===');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Full error object:', error);
-    console.error('=== CART POST ERROR END ===');
-    
+    console.error('Cart POST error:', error);
+
     // More specific error handling
     if (error.name === 'MongoServerError' && error.code === 11000) {
       // Duplicate key error - this means multiple carts for same user
@@ -270,7 +228,7 @@ export async function PUT(req) {
     }
 
     // Check stock when updating quantity
-    const product = await Product.findById(item.product);
+    const product = await Product.findById(item.product).select('sizes');
     if (product) {
       const selectedSize = product.sizes.find(s => s.size === item.size);
       if (selectedSize && quantity > selectedSize.stock) {
@@ -287,7 +245,10 @@ export async function PUT(req) {
     }
 
     await cart.save();
-    await cart.populate('items.product');
+    await cart.populate({
+      path: 'items.product',
+      select: 'name nameEn featuredImage price originalPrice colors isActive',
+    });
 
     return NextResponse.json({
       message: 'تم تحديث السلة',
@@ -329,7 +290,10 @@ export async function DELETE(req) {
     }
 
     await cart.save();
-    await cart.populate('items.product');
+    await cart.populate({
+      path: 'items.product',
+      select: 'name nameEn featuredImage price originalPrice colors isActive',
+    });
 
     return NextResponse.json({
       message: itemId ? 'تم إزالة المنتج من السلة' : 'تم تفريغ السلة',

@@ -1,4 +1,6 @@
 // HomepageHero.jsx
+'use client';
+
 import Link from 'next/link';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLanguage } from "@/context/LanguageContext";
@@ -16,7 +18,7 @@ const HomepageHero = () => {
     // Fetch hero image from API
     const fetchHeroImage = async () => {
       try {
-        const response = await fetch("/api/hero", { cache: "no-store" });
+        const response = await fetch("/api/hero");
         if (response.ok) {
           const data = await response.json();
           if (data.imageUrl) {
@@ -74,7 +76,7 @@ const HomepageHero = () => {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundImage: `url(${heroImage })`,
+          backgroundImage: `url(${heroImage || defaultImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: 0.7,
