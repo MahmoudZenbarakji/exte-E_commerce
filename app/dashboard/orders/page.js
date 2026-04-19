@@ -42,9 +42,14 @@ export default function OrdersPage() {
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
+    const id = orderId != null ? String(orderId) : '';
+    if (!id || id === 'undefined') {
+      alert(translations.updateOrderStatusFailed || 'Failed to update order status');
+      return;
+    }
     try {
       setUpdating(true);
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const response = await fetch(`/api/orders/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -56,9 +61,9 @@ export default function OrdersPage() {
 
       if (response.ok) {
         const updatedOrder = await response.json();
-        setOrders(prevOrders => 
-          prevOrders.map(order => 
-            order._id === orderId ? updatedOrder.order : order
+        setOrders(prevOrders =>
+          prevOrders.map((order) =>
+            String(order._id) === id ? updatedOrder.order : order
           )
         );
       } else {
