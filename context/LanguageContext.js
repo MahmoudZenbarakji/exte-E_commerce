@@ -238,6 +238,8 @@ export const LanguageProvider = ({ children, initialLocale = 'ar' }) => {
       shipped: "SHIPPED",
       delivered: "DELIVERED",
       notProvided: "Not provided",
+      deliveredOrderAdminHint: "You can change the status if this order was updated incorrectly.",
+      selectNewOrderStatus: "Select new status…",
       
       // Notifications
       notificationsWillAppear: "Notifications will appear here when you have updates.",
@@ -958,6 +960,8 @@ export const LanguageProvider = ({ children, initialLocale = 'ar' }) => {
       shipped: "تم الشحن",
       delivered: "تم التوصيل",
       notProvided: "غير مقدم",
+      deliveredOrderAdminHint: "يمكنك تغيير الحالة إذا تم تحديث الطلب عن طريق الخطأ.",
+      selectNewOrderStatus: "اختر الحالة الجديدة…",
       
       // Notifications
       notificationsWillAppear: "ستظهر الإشعارات هنا عندما يكون لديك تحديثات.",

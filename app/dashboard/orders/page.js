@@ -443,6 +443,33 @@ export default function OrdersPage() {
                               <span className="text-sm">{translations.markAsDelivered || 'MARK AS DELIVERED'}</span>
                             </button>
                           )}
+                          {order.status === 'delivered' && (
+                            <div className="space-y-2">
+                              <p className="text-xs text-gray-500 font-light">
+                                {translations.deliveredOrderAdminHint || 'You can change the status if this order was updated incorrectly.'}
+                              </p>
+                              <select
+                                key={`${order._id}-status`}
+                                defaultValue=""
+                                disabled={updating}
+                                onChange={(e) => {
+                                  const next = e.target.value;
+                                  if (!next) return;
+                                  updateOrderStatus(order._id, next);
+                                  e.target.value = '';
+                                }}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white font-light disabled:opacity-50"
+                              >
+                                <option value="" disabled>
+                                  {translations.selectNewOrderStatus || 'Select new status…'}
+                                </option>
+                                <option value="pending">{translations.pending || 'PENDING'}</option>
+                                <option value="accepted">{translations.accepted || 'ACCEPTED'}</option>
+                                <option value="rejected">{translations.rejected || 'REJECTED'}</option>
+                                <option value="shipped">{translations.shipped || 'SHIPPED'}</option>
+                              </select>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
