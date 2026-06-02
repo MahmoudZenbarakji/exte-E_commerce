@@ -25,19 +25,41 @@ export async function GET(request) {
     const subCategory = searchParams.get('subCategory');
     const collection = searchParams.get('collection');
     const featured = searchParams.get('featured');
+    const limitRaw = searchParams.get('limit');
+    const sortRaw = searchParams.get('sort');
     
     let query = {};
     if (category) query.category = category;
     if (subCategory) query.subCategory = subCategory;
     if (collection) query.collection = collection;
     if (featured === 'true') query.isFeatured = true;
+
+    const limit =
+      limitRaw && !Number.isNaN(parseInt(limitRaw, 10))
+        ? Math.max(0, Math.min(500, parseInt(limitRaw, 10)))
+        : undefined;
+
+    // Supports e.g. "createdAt", "-createdAt". Fallback: newest first.
+    const sort = (() => {
+      if (!sortRaw) return { createdAt: -1 };
+      const s = String(sortRaw).trim();
+      if (!s) return { createdAt: -1 };
+      if (s.startsWith('-')) return { [s.slice(1)]: -1 };
+      return { [s]: 1 };
+    })();
     
-    const products = await Product.find(query)
+    const q = Product.find(query)
       .populate('category', 'name')
       .populate('subCategory', 'name')
       .populate('collection', 'name')
-      .sort({ createdAt: -1 })
+      .sort(sort)
       .maxTimeMS(DB_TIMEOUT);
+
+    if (typeof limit === 'number') {
+      q.limit(limit);
+    }
+
+    const products = await q;
 
     return new Response(JSON.stringify(products), {
       status: 200,

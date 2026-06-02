@@ -30,14 +30,14 @@ const LatestCollections = () => {
         fetch('/api/categories?limit=2&sort=-createdAt')
       ]);
 
-      const collections = await collectionsRes.json();
-      const products = await productsRes.json();
-      const categories = await categoriesRes.json();
+      const collections = collectionsRes.ok ? await collectionsRes.json() : [];
+      const products = productsRes.ok ? await productsRes.json() : [];
+      const categories = categoriesRes.ok ? await categoriesRes.json() : [];
 
       setLatestData({
-        collections: collections.slice(0, 2),
-        products: products.slice(0, 2),
-        categories: categories.slice(0, 2)
+        collections: Array.isArray(collections) ? collections.slice(0, 2) : [],
+        products: Array.isArray(products) ? products.slice(0, 2) : [],
+        categories: Array.isArray(categories) ? categories.slice(0, 2) : [],
       });
     } catch (error) {
       console.error('Error fetching latest data:', error);
