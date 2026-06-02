@@ -222,11 +222,7 @@ export async function DELETE(request, { params }) {
     // Await params
     const { id } = await params;
 
-    const product = await Product.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    );
+    const product = await Product.findByIdAndDelete(id);
 
     if (!product) {
       return new Response(JSON.stringify({ error: 'Product not found' }), {
@@ -234,7 +230,7 @@ export async function DELETE(request, { params }) {
       });
     }
 
-    return new Response(JSON.stringify({ message: 'Product deactivated successfully' }), {
+    return new Response(JSON.stringify({ message: 'Product deleted successfully' }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

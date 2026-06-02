@@ -38,7 +38,6 @@ export default function CollectionsPage() {
     colors: [],
     tags: '',
     isFeatured: false,
-    isActive: true
   });
 
   const [categoryForm, setCategoryForm] = useState({
@@ -84,7 +83,7 @@ export default function CollectionsPage() {
     setProductForm({
       name: '', description: '', nameEn: '', descriptionEn: '', price: '', originalPrice: '', hasDiscount: false,
       category: '', subCategory: '', collection: '', sizes: [], colors: [], 
-      tags: '', isFeatured: false, isActive: true
+      tags: '', isFeatured: false
     });
     setEditingProduct(null);
   };
@@ -272,7 +271,6 @@ export default function CollectionsPage() {
       colors: product.colors || [],
       tags: product.tags?.join(', ') || '',
       isFeatured: product.isFeatured || false,
-      isActive: product.isActive
     });
     setEditingProduct(product);
   };
@@ -926,19 +924,6 @@ export default function CollectionsPage() {
                 </label>
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="productActive"
-                  checked={productForm.isActive}
-                  onChange={(e) => setProductForm(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="w-4 h-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded"
-                />
-                <label htmlFor="productActive" className="text-xs sm:text-sm font-light text-gray-700">
-                  {translations.activeProduct || 'ACTIVE PRODUCT'}
-                </label>
-              </div>
-
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -977,10 +962,6 @@ export default function CollectionsPage() {
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0 space-y-2">
-                      <span className={`text-xs px-2 py-1 ${product.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                        {product.isActive ? (translations.active || 'Active') : (translations.inactive || 'Inactive')}
-                      </span>
                       <div className="flex gap-2">
                         <button
                           onClick={() => editProduct(product)}

@@ -10,7 +10,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     
     // Build query
-    let query = { isActive: true };
+    let query = {};
     
     // Category filter
     if (searchParams.get('category')) {
