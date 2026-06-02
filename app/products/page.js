@@ -20,6 +20,7 @@ function ProductsPageContent() {
     subCategory: '',
     collection: '',
     priceRange: [0, 1000000],
+    priceFilterApplied: false,
     sizes: [],
     sort: 'newest',
     search: ''
@@ -140,11 +141,13 @@ const applyFilters = useCallback(() => {
     });
   }
 
-  // Apply price range filter
-  filtered = filtered.filter(product => 
-    product.price >= filters.priceRange[0] && 
-    product.price <= filters.priceRange[1]
-  );
+  // Apply price range filter only after user changes it
+  if (filters.priceFilterApplied) {
+    filtered = filtered.filter(product => 
+      product.price >= filters.priceRange[0] && 
+      product.price <= filters.priceRange[1]
+    );
+  }
 
   // Apply size filter
   if (filters.sizes.length > 0) {
@@ -195,7 +198,8 @@ const applyFilters = useCallback(() => {
   const handlePriceRangeChange = useCallback((values) => {
     setFilters(prev => ({
       ...prev,
-      priceRange: values
+      priceRange: values,
+      priceFilterApplied: true
     }));
   }, []);
 
@@ -205,6 +209,7 @@ const applyFilters = useCallback(() => {
       subCategory: '',
       collection: '',
       priceRange: [0, 1000000],
+      priceFilterApplied: false,
       sizes: [],
       sort: 'newest',
       search: ''
@@ -213,7 +218,8 @@ const applyFilters = useCallback(() => {
 
   const hasActiveFilters = useMemo(() => {
     return Object.entries(filters).some(([key, value]) => {
-      if (key === 'priceRange') return value[0] > 0 || value[1] < 1000000;
+      if (key === 'priceRange') return filters.priceFilterApplied;
+      if (key === 'priceFilterApplied') return false;
       if (Array.isArray(value)) return value.length > 0;
       return value && value !== 'newest';
     });
@@ -714,10 +720,15 @@ const applyFilters = useCallback(() => {
                     Collection: {collections.find(c => c._id === filters.collection)?.name}
                   </FilterChip>
                 )}
-                {(filters.priceRange[0] > 0 || filters.priceRange[1] < 1000000) && (
+                {filters.priceFilterApplied && (
                   <FilterChip
                     active={true}
-                    onClick={() => handleFilterChange('priceRange', [0, 1000000])}
+                    onClick={() =>
+                      updateFilters({
+                        priceRange: [0, 1000000],
+                        priceFilterApplied: false,
+                      })
+                    }
                   >
                     Price: {formatPrice(filters.priceRange[0])} - {formatPrice(filters.priceRange[1])} {translations.currencySymbol}
                   </FilterChip>
