@@ -265,7 +265,7 @@ const LatestCollections = () => {
   // Category Card - Smaller size
   const CategoryCard = ({ category, index }) => (
     <Link 
-      href="/products" 
+      href={`/products?category=${category._id}`}
       className="group block bg-white border border-gray-200 hover:border-gray-900 transition-all duration-300"
     >
       <div className="relative overflow-hidden bg-gray-50 aspect-[3/2]">

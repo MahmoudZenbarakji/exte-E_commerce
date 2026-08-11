@@ -1,13 +1,17 @@
 // app/products/page.js
 'use client';
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/context/LanguageContext';
 import { Toaster } from 'react-hot-toast';
 
-// ProductsPageContent component - No URL updates
+// ProductsPageContent component - reads category from URL when present
 function ProductsPageContent() {
+  const searchParams = useSearchParams();
+  const categoryFromUrl = searchParams.get('category') || '';
+
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -16,7 +20,7 @@ function ProductsPageContent() {
   const [loading, setLoading] = useState(true);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState({
-    category: '',
+    category: categoryFromUrl,
     subCategory: '',
     collection: '',
     priceRange: [0, 1000000],
@@ -48,6 +52,15 @@ function ProductsPageContent() {
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US').format(price);
   };
+
+  // Keep category filter in sync when navigating from home (men/women cards)
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      category: categoryFromUrl,
+      subCategory: categoryFromUrl !== prev.category ? '' : prev.subCategory
+    }));
+  }, [categoryFromUrl]);
 
   // Fetch all products and filter options on component mount
   useEffect(() => {
